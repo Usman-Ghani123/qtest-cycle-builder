@@ -24,6 +24,11 @@ export interface QTestCycleParams {
   typeFilter: 'All' | 'Manual' | 'Automated' | 'Performance' | 'Scenario' | 'Future enhancement/feature'
 }
 
+export interface QTestProject {
+  id: number
+  name: string
+}
+
 export interface MCPTool {
   name: string
   description: string

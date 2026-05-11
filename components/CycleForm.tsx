@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import type { QTestCycleParams } from '@/types/qtest'
+import { useState, useEffect } from 'react'
+import type { QTestCycleParams, QTestProject } from '@/types/qtest'
 import styles from './CycleForm.module.css'
 
 const TYPE_FILTER_OPTIONS: QTestCycleParams['typeFilter'][] = [
@@ -28,6 +28,28 @@ interface CycleFormProps {
 export default function CycleForm({ onLog }: CycleFormProps) {
   const [form, setForm] = useState<QTestCycleParams>(DEFAULT_FORM)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [projects, setProjects] = useState<QTestProject[]>([])
+  const [projectsLoading, setProjectsLoading] = useState(true)
+  const [projectsError, setProjectsError] = useState('')
+
+  useEffect(() => {
+    fetch('/api/mcp/list-projects')
+      .then((res) => res.json())
+      .then((data: { projects: QTestProject[]; error?: string }) => {
+        if (data.error) {
+          setProjectsError(data.error)
+        } else {
+          setProjects(data.projects)
+          if (data.projects.length > 0) {
+            setForm((prev) => ({ ...prev, projectId: String(data.projects[0].id) }))
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        setProjectsError(err instanceof Error ? err.message : 'Failed to load projects')
+      })
+      .finally(() => setProjectsLoading(false))
+  }, [])
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -58,16 +80,28 @@ export default function CycleForm({ onLog }: CycleFormProps) {
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.field}>
-        <label htmlFor="projectId">Project ID</label>
-        <input
+        <label htmlFor="projectId">Project</label>
+        <select
           id="projectId"
           name="projectId"
-          type="text"
-          placeholder="e.g. 12345"
           value={form.projectId}
           onChange={handleChange}
+          disabled={projectsLoading}
           required
-        />
+        >
+          {projectsLoading && <option value="">Loading projects…</option>}
+          {!projectsLoading && projects.length === 0 && (
+            <option value="">No projects found</option>
+          )}
+          {projects.map((p) => (
+            <option key={p.id} value={String(p.id)}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        {projectsError && (
+          <span className={styles.fieldError}>Could not load projects: {projectsError}</span>
+        )}
       </div>
 
       <div className={styles.field}>
