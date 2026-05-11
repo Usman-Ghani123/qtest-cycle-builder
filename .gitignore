@@ -4,3 +4,4 @@ node_modules
 *.local
 .claude/settings.local.json
 tsconfig.tsbuildinfo
+CLAUDE.md
