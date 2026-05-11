@@ -1,0 +1,4 @@
+.vscode/mcp.json
+node_modules
+.next
+*.local

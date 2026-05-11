@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "qtest-mcp-server": {
+      "url": "https://YOUR_DOMAIN.qtestnet.com/mcp",
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer YOUR_PAT_TOKEN_HERE"
+      }
+    }
+  }
+}
