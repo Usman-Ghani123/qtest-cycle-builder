@@ -1,10 +1,19 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import type { QTestProgress } from '@/types/qtest'
 import styles from './ProgressLog.module.css'
 
 interface ProgressLogProps {
-  messages: string[]
+  messages: QTestProgress[]
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${hh}:${mm}:${ss}`
 }
 
 export default function ProgressLog({ messages }: ProgressLogProps) {
@@ -23,7 +32,8 @@ export default function ProgressLog({ messages }: ProgressLogProps) {
         ) : (
           messages.map((msg, i) => (
             <div key={i} className={styles.line}>
-              {msg}
+              <span className={styles.timestamp}>{formatTime(msg.timestamp)}</span>
+              <span className={styles[msg.status]}>{msg.message}</span>
             </div>
           ))
         )}

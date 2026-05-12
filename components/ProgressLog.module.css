@@ -34,7 +34,24 @@
 }
 
 .line {
-  color: #111827;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.timestamp {
+  color: #9ca3af;
+  margin-right: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.info {
+  color: #111827;
+}
+
+.success {
+  color: #16a34a;
+}
+
+.error {
+  color: #dc2626;
 }

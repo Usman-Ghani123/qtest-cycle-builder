@@ -4,20 +4,33 @@ import { useState } from 'react'
 import CycleForm from '@/components/CycleForm'
 import ProgressLog from '@/components/ProgressLog'
 import { useQTestMCP } from '@/hooks/useQTestMCP'
+import type { QTestProgress } from '@/types/qtest'
 import styles from './page.module.css'
 
 export default function HomePage() {
   const { isConnected, isLoading, tools } = useQTestMCP()
-  const [logs, setLogs] = useState<string[]>([])
+  const [logs, setLogs] = useState<QTestProgress[]>([])
 
-  function addLog(message: string) {
-    setLogs((prev) => [...prev, message])
+  function addProgress(progress: QTestProgress) {
+    setLogs((prev) => [...prev, progress])
   }
 
   function statusBadge() {
-    if (isLoading) return <span className={`${styles.badge} ${styles.checking}`}>⏳ Checking...</span>
-    if (isConnected) return <span className={`${styles.badge} ${styles.connected}`}>🟢 Connected ({tools.length} tools)</span>
-    return <span className={`${styles.badge} ${styles.disconnected}`}>🔴 Disconnected</span>
+    if (isLoading) {
+      return <span className={`${styles.badge} ${styles.checking}`}>⏳ Checking connection...</span>
+    }
+    if (isConnected) {
+      return (
+        <span className={`${styles.badge} ${styles.connected}`}>
+          🟢 Connected to qTest MCP ({tools.length} tools available)
+        </span>
+      )
+    }
+    return (
+      <span className={`${styles.badge} ${styles.disconnected}`}>
+        🔴 MCP Disconnected — check .vscode/mcp.json
+      </span>
+    )
   }
 
   return (
@@ -27,7 +40,10 @@ export default function HomePage() {
         {statusBadge()}
       </section>
 
-      <CycleForm onLog={addLog} />
+      <CycleForm
+        onProgress={addProgress}
+        onSubmitStart={() => setLogs([])}
+      />
 
       <ProgressLog messages={logs} />
     </>

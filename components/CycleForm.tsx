@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { QTestCycleParams, QTestProject } from '@/types/qtest'
+import type { QTestCycleParams, QTestProject, QTestProgress } from '@/types/qtest'
 import styles from './CycleForm.module.css'
 
 const TYPE_FILTER_OPTIONS: QTestCycleParams['typeFilter'][] = [
@@ -22,10 +22,11 @@ const DEFAULT_FORM: QTestCycleParams = {
 }
 
 interface CycleFormProps {
-  onLog: (message: string) => void
+  onProgress: (progress: QTestProgress) => void
+  onSubmitStart: () => void
 }
 
-export default function CycleForm({ onLog }: CycleFormProps) {
+export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps) {
   const [form, setForm] = useState<QTestCycleParams>(DEFAULT_FORM)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [projects, setProjects] = useState<QTestProject[]>([])
@@ -60,18 +61,57 @@ export default function CycleForm({ onLog }: CycleFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    onSubmitStart()
     setIsSubmitting(true)
-    onLog('Submitting cycle creation request...')
+
     try {
       const res = await fetch('/api/create-cycle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      const text = await res.text()
-      onLog(`Response: ${text}`)
+
+      if (!res.body) {
+        onProgress({ message: 'No response body received', status: 'error', timestamp: new Date().toISOString() })
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const progress = JSON.parse(line) as QTestProgress
+              onProgress(progress)
+            } catch {
+              onProgress({ message: line, status: 'info', timestamp: new Date().toISOString() })
+            }
+          }
+        }
+      }
+
+      if (buffer.trim()) {
+        try {
+          const progress = JSON.parse(buffer) as QTestProgress
+          onProgress(progress)
+        } catch {
+          onProgress({ message: buffer, status: 'info', timestamp: new Date().toISOString() })
+        }
+      }
     } catch (err) {
-      onLog(`Error: ${err instanceof Error ? err.message : String(err)}`)
+      onProgress({
+        message: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        status: 'error',
+        timestamp: new Date().toISOString(),
+      })
     } finally {
       setIsSubmitting(false)
     }

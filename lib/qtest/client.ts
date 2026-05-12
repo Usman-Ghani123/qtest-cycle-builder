@@ -1,19 +1,31 @@
 import type { QTestConfig } from '@/types/qtest'
 
-// This will handle all qTest API calls with Bearer token auth.
-// All requests attach Authorization: Bearer <token> and target baseUrl/api/v3.
+/**
+ * Base fetch wrapper for direct qTest REST API calls.
+ * Constructs the full URL, attaches auth headers, and parses the JSON response.
+ * Throws a descriptive error on any non-2xx response.
+ */
 export async function qtestFetch(
   config: QTestConfig,
-  path: string,
-  options: RequestInit = {}
-): Promise<Response> {
-  const url = `${config.baseUrl}/api/v3/projects/${config.projectId}${path}`
-  return fetch(url, {
-    ...options,
+  endpoint: string,
+  method: 'GET' | 'POST',
+  body?: unknown
+): Promise<unknown> {
+  const url = `${config.baseUrl}/api/v3/projects/${config.projectId}${endpoint}`
+
+  const res = await fetch(url, {
+    method,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${config.token}`,
-      ...options.headers,
     },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`HTTP ${res.status}: ${text}`)
+  }
+
+  return res.json()
 }

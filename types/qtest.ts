@@ -5,15 +5,25 @@ export interface QTestConfig {
 }
 
 export interface QTestFolder {
-  id: string
+  id: number
   name: string
-  children: QTestFolder[]
+  parentId?: number
+  parentType?: string
+  children?: QTestFolder[]
 }
 
+export type TypeFilter =
+  | 'All'
+  | 'Manual'
+  | 'Automated'
+  | 'Performance'
+  | 'Scenario'
+  | 'Future enhancement/feature'
+
 export interface QTestTestCase {
-  id: string
+  id: number
   name: string
-  type: string
+  type: 'Manual' | 'Automated' | 'Performance' | 'Scenario' | 'Future enhancement/feature'
 }
 
 export interface QTestCycleParams {
@@ -21,7 +31,13 @@ export interface QTestCycleParams {
   sourceFolderName: string
   cycleName: string
   targetFolderName: string
-  typeFilter: 'All' | 'Manual' | 'Automated' | 'Performance' | 'Scenario' | 'Future enhancement/feature'
+  typeFilter: TypeFilter
+}
+
+export interface QTestProgress {
+  message: string
+  status: 'info' | 'success' | 'error'
+  timestamp: string
 }
 
 export interface QTestProject {
