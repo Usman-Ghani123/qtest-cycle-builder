@@ -1,71 +1,43 @@
 # qTest Cycle Builder
 
-A Next.js App Router application that automates the creation of qTest test cycles by reading test cases from Test Design folders and building structured test cycles in Test Execution.
+A web app that automates the creation of qTest test cycles — saving QA engineers from repetitive manual work in the qTest UI.
 
-## Prerequisites
+---
 
-- Node.js 18+
-- A qTest account with API access
-- A Personal Access Token (PAT) for qTest
+## What it does
 
-## Setup
+qTest Cycle Builder lets you create a fully structured test cycle in seconds by filling out a simple form. No more manually browsing folders, selecting test cases one by one, or setting up suites inside qTest.
 
-1. Clone the repository:
-   ```bash
-   git clone <repo-url>
-   cd qtest-cycle-builder
-   ```
+---
 
-2. Create `.vscode/mcp.json` using the provided skeleton as a reference:
-   ```bash
-   cp mcp.example.json .vscode/mcp.json
-   ```
-   Then edit `.vscode/mcp.json` and replace the placeholders with your actual qTest domain and PAT token:
-   ```json
-   {
-     "servers": {
-       "qtest-mcp-server": {
-         "url": "https://YOUR_DOMAIN.qtestnet.com/mcp",
-         "type": "http",
-         "headers": {
-           "Authorization": "Bearer YOUR_PAT_TOKEN_HERE"
-         }
-       }
-     }
-   }
-   ```
-   > **Note:** `.vscode/mcp.json` is gitignored because it contains your personal credentials. The skeleton at `mcp.example.json` is committed as a reference only.
+## Features
 
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Live Project Selection
+The Project dropdown is populated in real time from your connected qTest account. No need to look up or type in project IDs — just pick from the list.
 
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
+### Test Case Filtering
+Choose which test cases to include based on type. The available filter options are defined in `config/typeFilters.json` — edit that file to add, remove, or rename types and they will automatically appear in the UI dropdown. No code changes needed.
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Folder-Based Sourcing
+Specify a Test Design folder by name. The app finds that folder in your project and pulls all matching test cases from it.
 
-## Finding Your qTest Project ID and PAT Token
+### Automated Cycle Creation
+The app creates the full structure in Test Execution for you:
+- Creates the test cycle under your chosen execution folder
+- Creates a test suite mirroring your source folder
+- Adds all matching test runs into the suite
 
-**Project ID:**
-- Log in to qTest Manager
-- Navigate to your project
-- The Project ID is visible in the URL: `https://yourcompany.qtestnet.com/p/<PROJECT_ID>/...`
+### Real-Time Progress Log
+A live progress panel updates as each step completes — so you always know what's happening and can spot issues immediately.
 
-**PAT Token:**
-- In qTest Manager, click your avatar in the top-right corner
-- Go to **Profile** → **API & SDK**
-- Generate or copy your Personal Access Token
+### Connection Status Badge
+A status indicator on the home page shows whether the app is connected to your qTest account:
+- **Connected** — ready to use
+- **Disconnected** — credentials need attention
+- **Checking...** — verifying connection on page load
 
-## MCP Debug
+---
 
-The home page at [http://localhost:3000](http://localhost:3000) displays a connection status badge showing whether the MCP server is reachable:
+## Who it's for
 
-- 🟢 **Connected** — MCP server is configured and responding
-- 🔴 **Disconnected** — MCP server is unreachable or not configured
-- ⏳ **Checking...** — Connection check is in progress
-
-If disconnected, verify your `.vscode/mcp.json` configuration and ensure your PAT token is valid.
+QA engineers who manage qTest projects and need to build test cycles repeatedly — such as at the start of every sprint — and want to avoid doing it manually through the qTest UI each time.
