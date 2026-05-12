@@ -55,6 +55,34 @@ export async function findTargetFolder(
 }
 
 /**
+ * Walks a slash-delimited path, finding each segment if it exists or creating it if not.
+ * Handles all cases: fully missing path, partial path, or fully existing path.
+ */
+export async function findOrCreateTargetPath(config: QTestConfig, folderPath: string): Promise<QTestFolder> {
+  const segments = folderPath.split('/').map((s) => s.trim()).filter(Boolean)
+
+  const roots = await listCycles(config)
+  const rootMatch = roots.find((c) => c.name.toLowerCase() === segments[0].toLowerCase())
+  let current: QTestFolder = rootMatch ?? await createRootCycle(config, segments[0])
+
+  for (const segment of segments.slice(1)) {
+    const children = await listCycles(config, current.id)
+    const match = children.find((c) => c.name.toLowerCase() === segment.toLowerCase())
+    current = match ?? await createTestCycle(config, segment, current.id, 'test-cycle')
+  }
+
+  return current
+}
+
+/**
+ * Creates a new root-level test cycle folder in Test Execution.
+ */
+export async function createRootCycle(config: QTestConfig, name: string): Promise<QTestFolder> {
+  const data = await qtestFetch(config, '/test-cycles?parentType=root', 'POST', { name, description: '' })
+  return toFolder(data as RawCycle)
+}
+
+/**
  * Creates a test cycle (or nested cycle folder) under a given parent via the REST API.
  * parentType must be 'root' for top-level or 'test-cycle' for nested.
  */

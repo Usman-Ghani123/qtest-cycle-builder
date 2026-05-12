@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { readMcpConfig } from '@/lib/readMcpConfig'
 import type { QTestConfig, QTestFolder, QTestCycleParams, QTestProgress, QTestTestCase } from '@/types/qtest'
 import { getSourceFolder, getFolderTree, getTestCases } from '@/lib/qtest/testDesign'
-import { findTargetFolder, createTestCycle, createTestSuite, createTestRun } from '@/lib/qtest/testExecution'
+import { findTargetFolder, findOrCreateTargetPath, createTestCycle, createTestSuite, createTestRun } from '@/lib/qtest/testExecution'
 
 export async function POST(request: NextRequest) {
   const params: QTestCycleParams = await request.json()
@@ -87,8 +87,19 @@ export async function POST(request: NextRequest) {
         emit(`📊 Found ${tcMap.size} folder(s) with ${totalTcs} matching test case(s)`, 'info')
 
         emit(`🗂 Finding target folder: ${params.targetFolderName}...`, 'info')
-        const targetFolder = await findTargetFolder(config, params.targetFolderName)
-        emit(`✅ Found target folder: ${targetFolder.name}`, 'success')
+        let targetFolder: QTestFolder
+        try {
+          targetFolder = await findTargetFolder(config, params.targetFolderName)
+          emit(`✅ Found target folder: ${targetFolder.name}`, 'success')
+        } catch {
+          if (params.createTargetFolderIfMissing) {
+            emit(`📁 Creating target folder: ${params.targetFolderName}...`, 'info')
+            targetFolder = await findOrCreateTargetPath(config, params.targetFolderName)
+            emit(`✅ Created target folder: ${params.targetFolderName}`, 'success')
+          } else {
+            throw new Error(`Target folder "${params.targetFolderName}" not found in Test Execution`)
+          }
+        }
 
         emit(`🏗️ Creating test cycle: ${params.cycleName}...`, 'info')
         const mainCycle = await createTestCycle(config, params.cycleName, targetFolder.id, 'test-cycle')

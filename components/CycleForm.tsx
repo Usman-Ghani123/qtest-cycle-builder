@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { QTestCycleParams, QTestProject, QTestProgress } from '@/types/qtest'
 import styles from './CycleForm.module.css'
+import ConfirmModal from './ConfirmModal'
 
 const TYPE_FILTER_OPTIONS: QTestCycleParams['typeFilter'][] = [
   'All',
@@ -29,6 +30,7 @@ interface CycleFormProps {
 export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps) {
   const [form, setForm] = useState<QTestCycleParams>(DEFAULT_FORM)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showFolderModal, setShowFolderModal] = useState(false)
   const [projects, setProjects] = useState<QTestProject[]>([])
   const [projectsLoading, setProjectsLoading] = useState(true)
   const [projectsError, setProjectsError] = useState('')
@@ -59,8 +61,7 @@ export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps)
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function doSubmit(createTargetFolderIfMissing: boolean) {
     onSubmitStart()
     setIsSubmitting(true)
 
@@ -68,7 +69,7 @@ export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps)
       const res = await fetch('/api/create-cycle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, createTargetFolderIfMissing }),
       })
 
       if (!res.body) {
@@ -117,7 +118,42 @@ export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps)
     }
   }
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    try {
+      const res = await fetch(
+        `/api/mcp/check-target-folder?projectId=${form.projectId}&folderName=${encodeURIComponent(form.targetFolderName)}`
+      )
+      const data = await res.json() as { exists: boolean }
+      if (!data.exists) {
+        setShowFolderModal(true)
+        return
+      }
+    } catch {
+      // If check fails, let the backend handle it
+    }
+    doSubmit(false)
+  }
+
+  function handleModalConfirm() {
+    setShowFolderModal(false)
+    doSubmit(true)
+  }
+
+  function handleModalCancel() {
+    setShowFolderModal(false)
+    onProgress({ message: 'Process cancelled by user.', status: 'error', timestamp: new Date().toISOString() })
+  }
+
   return (
+    <>
+    {showFolderModal && (
+      <ConfirmModal
+        message={`Target folder "${form.targetFolderName}" does not exist in Test Execution. Would you like to create it?`}
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
+    )}
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.field}>
         <label htmlFor="projectId">Project</label>
@@ -205,5 +241,6 @@ export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps)
         {isSubmitting ? 'Creating...' : 'Create Test Cycle'}
       </button>
     </form>
+    </>
   )
 }

@@ -32,6 +32,7 @@ export interface QTestCycleParams {
   cycleName: string
   targetFolderName: string
   typeFilter: TypeFilter
+  createTargetFolderIfMissing?: boolean
 }
 
 export interface QTestProgress {
