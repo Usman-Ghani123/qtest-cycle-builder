@@ -12,18 +12,12 @@ export interface QTestFolder {
   children?: QTestFolder[]
 }
 
-export type TypeFilter =
-  | 'All'
-  | 'Manual'
-  | 'Automated'
-  | 'Performance'
-  | 'Scenario'
-  | 'Future enhancement/feature'
+export type TypeFilter = string
 
 export interface QTestTestCase {
   id: number
   name: string
-  type: 'Manual' | 'Automated' | 'Performance' | 'Scenario' | 'Future enhancement/feature'
+  type: string
 }
 
 export interface QTestCycleParams {

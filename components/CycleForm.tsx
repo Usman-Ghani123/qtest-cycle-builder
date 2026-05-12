@@ -4,22 +4,16 @@ import { useState, useEffect } from 'react'
 import type { QTestCycleParams, QTestProject, QTestProgress } from '@/types/qtest'
 import styles from './CycleForm.module.css'
 import ConfirmModal from './ConfirmModal'
+import typeFiltersConfig from '@/config/typeFilters.json'
 
-const TYPE_FILTER_OPTIONS: QTestCycleParams['typeFilter'][] = [
-  'All',
-  'Manual',
-  'Automated',
-  'Performance',
-  'Scenario',
-  'Future enhancement/feature',
-]
+const TYPE_FILTER_OPTIONS: string[] = typeFiltersConfig.filters
 
 const DEFAULT_FORM: QTestCycleParams = {
   projectId: '',
   sourceFolderName: '',
   cycleName: '',
   targetFolderName: '',
-  typeFilter: 'All',
+  typeFilter: TYPE_FILTER_OPTIONS[0] ?? 'All',
 }
 
 interface CycleFormProps {
