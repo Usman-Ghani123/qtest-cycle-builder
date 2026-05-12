@@ -44,15 +44,12 @@ function resolveTestType(tc: RawTestCase): string | null {
   return null
 }
 
-function flattenModules(modules: RawModuleWithChildren[]): QTestFolder[] {
-  const result: QTestFolder[] = []
-  for (const m of modules) {
-    result.push({ id: m.id, name: m.name })
-    if (m.children?.length) {
-      result.push(...flattenModules(m.children))
-    }
-  }
-  return result
+function buildTree(modules: RawModuleWithChildren[]): QTestFolder[] {
+  return modules.map(m => ({
+    id: m.id,
+    name: m.name,
+    children: m.children?.length ? buildTree(m.children) : [],
+  }))
 }
 
 /**
@@ -102,10 +99,10 @@ export async function getSourceFolder(
 export async function getFolderTree(
   config: QTestConfig,
   folder: QTestFolder
-): Promise<QTestFolder[]> {
+): Promise<QTestFolder> {
   const result = await qtestFetch(config, `/modules?parentId=${folder.id}&expand=descendants`, 'GET')
   const topLevel = extractArray<RawModuleWithChildren>(result)
-  return [folder, ...flattenModules(topLevel)]
+  return { ...folder, children: buildTree(topLevel) }
 }
 
 async function fetchAllTestCases(config: QTestConfig, parentId: number): Promise<RawTestCase[]> {
