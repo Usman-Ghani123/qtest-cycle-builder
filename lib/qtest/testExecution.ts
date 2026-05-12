@@ -24,25 +24,34 @@ function extractArray<T>(result: unknown): T[] {
   return []
 }
 
+async function listCycles(config: QTestConfig, parentId?: number): Promise<QTestFolder[]> {
+  const endpoint = parentId !== undefined
+    ? `/test-cycles?parentId=${parentId}&parentType=test-cycle`
+    : '/test-cycles'
+  const result = await qtestFetch(config, endpoint, 'GET')
+  return extractArray<RawCycle>(result).map(toFolder)
+}
+
 /**
- * Finds a root-level test cycle folder in Test Execution by name (case-insensitive)
- * using the REST test-cycles endpoint. Throws if no matching cycle is found.
+ * Finds a test cycle folder in Test Execution by name or slash-delimited path (case-insensitive).
+ * e.g. "Sprint 42" or "Sprint 42/Sub-folder"
  */
 export async function findTargetFolder(
   config: QTestConfig,
   folderName: string
 ): Promise<QTestFolder> {
-  const result = await qtestFetch(config, '/test-cycles', 'GET')
-  const cycles = extractArray<RawCycle>(result)
-  const found = cycles.find(
-    (c) => c.name.toLowerCase() === folderName.toLowerCase()
-  )
-
-  if (!found) {
-    throw new Error(`Target folder "${folderName}" not found in Test Execution`)
+  const segments = folderName.split('/').map((s) => s.trim()).filter(Boolean)
+  const roots = await listCycles(config)
+  const rootMatch = roots.find((c) => c.name.toLowerCase() === segments[0].toLowerCase())
+  if (!rootMatch) throw new Error(`Target folder "${segments[0]}" not found in Test Execution`)
+  let current = rootMatch
+  for (const segment of segments.slice(1)) {
+    const children = await listCycles(config, current.id)
+    const match = children.find((c) => c.name.toLowerCase() === segment.toLowerCase())
+    if (!match) throw new Error(`Folder "${segment}" not found under "${current.name}"`)
+    current = match
   }
-
-  return toFolder(found)
+  return current
 }
 
 /**

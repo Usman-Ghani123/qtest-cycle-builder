@@ -150,11 +150,12 @@ export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps)
           id="sourceFolderName"
           name="sourceFolderName"
           type="text"
-          placeholder="e.g. Regression Suite"
+          placeholder="e.g. Regression Suite  or  Feature Test Cases/Landing Page"
           value={form.sourceFolderName}
           onChange={handleChange}
           required
         />
+        <span className={styles.fieldHint}>Use / to target a nested folder, e.g. Feature Test Cases/Landing Page</span>
       </div>
 
       <div className={styles.field}>
@@ -176,11 +177,12 @@ export default function CycleForm({ onProgress, onSubmitStart }: CycleFormProps)
           id="targetFolderName"
           name="targetFolderName"
           type="text"
-          placeholder="e.g. Sprint 42"
+          placeholder="e.g. Sprint 42  or  Releases/Sprint 42"
           value={form.targetFolderName}
           onChange={handleChange}
           required
         />
+        <span className={styles.fieldHint}>Use / to target a nested cycle folder, e.g. Releases/Sprint 42</span>
       </div>
 
       <div className={styles.field}>

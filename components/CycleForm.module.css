@@ -40,6 +40,11 @@
   color: #dc2626;
 }
 
+.fieldHint {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
 .submit {
   align-self: flex-start;
   padding: 0.6rem 1.4rem;

@@ -66,29 +66,39 @@ function extractArray<T>(result: unknown): T[] {
   return []
 }
 
+async function findModuleByName(config: QTestConfig, name: string): Promise<QTestFolder> {
+  const result = await callMcpTool('search-modules', {
+    projectId: Number(config.projectId),
+    search: name,
+  })
+  const modules = extractArray<RawModule>(result)
+  const found = modules.find((m) => m.name.toLowerCase() === name.toLowerCase())
+  if (!found) throw new Error(`Source folder "${name}" not found in Test Design`)
+  return { id: found.id, name: found.name }
+}
+
+async function getDirectModuleChildren(config: QTestConfig, parentId: number): Promise<QTestFolder[]> {
+  const result = await qtestFetch(config, `/modules?parentId=${parentId}`, 'GET')
+  return extractArray<RawModule>(result).map((m) => ({ id: m.id, name: m.name }))
+}
+
 /**
- * Finds a module in Test Design by exact name (case-insensitive) using the search-modules MCP tool.
- * Throws if no matching module is found.
+ * Finds a module in Test Design by name or slash-delimited path (case-insensitive).
+ * e.g. "Landing Page" or "Feature Test Cases/Landing Page"
  */
 export async function getSourceFolder(
   config: QTestConfig,
   folderName: string
 ): Promise<QTestFolder> {
-  const result = await callMcpTool('search-modules', {
-    projectId: Number(config.projectId),
-    search: folderName,
-  })
-
-  const modules = extractArray<RawModule>(result)
-  const found = modules.find(
-    (m) => m.name.toLowerCase() === folderName.toLowerCase()
-  )
-
-  if (!found) {
-    throw new Error(`Source folder "${folderName}" not found in Test Design`)
+  const segments = folderName.split('/').map((s) => s.trim()).filter(Boolean)
+  let current = await findModuleByName(config, segments[0])
+  for (const segment of segments.slice(1)) {
+    const children = await getDirectModuleChildren(config, current.id)
+    const match = children.find((c) => c.name.toLowerCase() === segment.toLowerCase())
+    if (!match) throw new Error(`Folder "${segment}" not found under "${current.name}"`)
+    current = match
   }
-
-  return { id: found.id, name: found.name }
+  return current
 }
 
 /**
