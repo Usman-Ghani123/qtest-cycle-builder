@@ -10,6 +10,12 @@ qTest Cycle Builder lets you create a fully structured test cycle in seconds by 
 
 ---
 
+## Who it's for
+
+QA engineers who manage qTest projects and need to build test cycles repeatedly — such as at the start of every sprint — and want to avoid doing it manually through the qTest UI each time.
+
+---
+
 ## Features
 
 ### Live Project Selection
@@ -38,6 +44,40 @@ A status indicator on the home page shows whether the app is connected to your q
 
 ---
 
-## Who it's for
+## Configuration
 
-QA engineers who manage qTest projects and need to build test cycles repeatedly — such as at the start of every sprint — and want to avoid doing it manually through the qTest UI each time.
+Before running the app, create a `.vscode/mcp.json` file in the project root using the provided example as a reference:
+
+```bash
+cp mcp.example.json .vscode/mcp.json
+```
+
+Then fill in your qTest domain and Personal Access Token (PAT):
+
+```json
+{
+  "servers": {
+    "qtest-mcp-server": {
+      "url": "https://YOUR_DOMAIN.qtestnet.com/mcp",
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer YOUR_PAT_TOKEN_HERE"
+      }
+    }
+  }
+}
+```
+
+> `.vscode/mcp.json` must be gitignored — your credentials should never be committed.
+
+---
+
+## Running Locally
+
+```bash
+npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
